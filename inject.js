@@ -2,7 +2,7 @@
   const baseURL = 'https://ru.wikipedia.org/api/rest_v1/page/summary/';
   const maxSelectionLength = 40;
 
-  function getDefinition(text) {
+  const getDefinition = (text) => {
     let requestUrl = baseURL + text;
 
     return fetch(requestUrl).then(response => response.json()).then(result => {
@@ -10,14 +10,14 @@
     });
   }
 
-  function clearSelection() {
+  const clearSelection = () => {
     var currentBox = document.getElementById('wiki-what-box');
     if (currentBox) {
       currentBox.remove();
     }
   }
 
-  function generateBox(text, position) {
+  const generateBox = (text, position) => {
     var box = document.createElement('p');
     box.id = 'wiki-what-box';
     box.innerHTML = text;
@@ -35,7 +35,7 @@
     document.body.appendChild(box);
   }
 
-  function sanitize(string) {
+  const sanitize = (string) => {
     var output = string.replace(/<script[^>]*?>.*?<\/script>/gi, '').
   			 replace(/<[\/\!]*?[^<>]*?>/gi, '').
   			 replace(/<style[^>]*?>.*?<\/style>/gi, '').
@@ -44,7 +44,7 @@
     return output;
   }
 
-  function getBoxPosition(event) {
+  const getBoxPosition = (event) => {
     var scrollTop = (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
     const posX = event.clientX - 50;
     const posY = event.clientY + 15 + scrollTop;
@@ -52,7 +52,7 @@
     return [posX, posY];
   }
 
-  document.addEventListener('mouseup', function(event) {
+  document.addEventListener('mouseup', (event) => {
     clearSelection();
     let selectedText = window.getSelection().toString();
     let sanitizedText = sanitize(selectedText);
@@ -63,7 +63,7 @@
 
     if (sanitizedText && sanitizedText.length) {
       getDefinition(sanitizedText).then(
-        function(res) {
+        (res) => {
           var text = '';
           if (res.description && !res.type == 'disambiguation') {
             text = res.description;
@@ -75,7 +75,7 @@
 
           generateBox(text, getBoxPosition(event));
         },
-        function(err) {
+        (err) => {
           console.error(err);
           generateBox('Ошибка!', getBoxPosition(event));
         }
@@ -83,7 +83,7 @@
     }
   }, false);
 
-  document.addEventListener('keydown', function(evt) {
+  document.addEventListener('keydown', (evt) => {
     evt = evt || window.event;
     var isEscape = false;
     if ('key' in evt) {
