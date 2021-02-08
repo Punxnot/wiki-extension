@@ -1,12 +1,8 @@
 (function() {
-  var currentSelection;
-  const baseURL = "https://ru.wikipedia.org/api/rest_v1/page/summary/";
+  const baseURL = 'https://ru.wikipedia.org/api/rest_v1/page/summary/';
   const maxSelectionLength = 40;
 
   function getDefinition(text) {
-    // Search for the text definition in Wikipedia
-    // https://ru.wikipedia.org/api/rest_v1/page/summary/Stack_Overflow
-
     let requestUrl = baseURL + text;
 
     return fetch(requestUrl).then(response => response.json()).then(result => {
@@ -15,28 +11,27 @@
   }
 
   function clearSelection() {
-    currentSelection = '';
     var currentBox = document.getElementById('wiki-what-box');
     if (currentBox) {
       currentBox.remove();
     }
   }
 
-  function generateBox(text) {
+  function generateBox(text, position) {
     var box = document.createElement('p');
     box.id = 'wiki-what-box';
     box.innerHTML = text;
-    box.style.position = "fixed";
-    box.style.zIndex = "9999";
-    box.style.top = "0px";
-    box.style.right = "0px";
-    box.style.maxWidth = "200px";
-    box.style.maxHeight = "200px";
-    box.style.overflow = "auto";
-    box.style.backgroundColor = "#bce6e1";
-    box.style.color = "#000000";
-    box.style.opacity = "0.8";
-    box.style.padding = "10px";
+    box.style.position = 'absolute';
+    box.style.zIndex = '9999';
+    box.style.top = position[1] + 'px';
+    box.style.left = position[0] + 'px';
+    box.style.maxWidth = '200px';
+    box.style.maxHeight = '200px';
+    box.style.overflow = 'auto';
+    box.style.backgroundColor = '#bce6e1';
+    box.style.color = '#000000';
+    box.style.padding = '10px';
+    box.style.borderRadius = '5px';
     document.body.appendChild(box);
   }
 
@@ -47,6 +42,14 @@
   			 replace(/<![\s\S]*?--[ \t\n\r]*>/gi, '').
          trim();
     return output;
+  }
+
+  function getBoxPosition(event) {
+    var scrollTop = (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
+    const posX = event.clientX - 50;
+    const posY = event.clientY + 15 + scrollTop;
+
+    return [posX, posY];
   }
 
   document.addEventListener('mouseup', function(event) {
@@ -61,35 +64,34 @@
     if (sanitizedText && sanitizedText.length) {
       getDefinition(sanitizedText).then(
         function(res) {
-          if (res.description && !res.type == "disambiguation") {
-            generateBox(res.description);
-          } else if (res.type == "disambiguation" || res.extract) {
-            generateBox(res.extract);
+          var text = '';
+          if (res.description && !res.type == 'disambiguation') {
+            text = res.description;
+          } else if (res.type == 'disambiguation' || res.extract) {
+            text = res.extract;
           } else {
-            generateBox(res.title);
+            text = res.title;
           }
+
+          generateBox(text, getBoxPosition(event));
         },
         function(err) {
           console.error(err);
-          generateBox("Error!");
+          generateBox('Ошибка!', getBoxPosition(event));
         }
       );
-
-
-      // var range = window.getSelection().getRangeAt(0);
-      // console.log(range);
     }
   }, false);
 
-  document.addEventListener("keydown", function(evt) {
+  document.addEventListener('keydown', function(evt) {
     evt = evt || window.event;
     var isEscape = false;
-    if ("key" in evt) {
-      isEscape = (evt.key == "Escape" || evt.key == "Esc");
+    if ('key' in evt) {
+      isEscape = (evt.key == 'Escape' || evt.key == 'Esc');
     } else {
       isEscape = (evt.keyCode == 27);
     }
-    if (isEscape && currentSelection) {
+    if (isEscape) {
       clearSelection();
     }
   });
