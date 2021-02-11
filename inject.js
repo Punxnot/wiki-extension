@@ -33,9 +33,8 @@
   const generateBox = (text, position) => {
     let existing = document.getElementById('wiki-what-box');
     if (!existing) {
-      var box = document.createElement('p');
+      var box = document.createElement('div');
       box.id = 'wiki-what-box';
-      box.innerHTML = text;
       box.style.position = 'absolute';
       box.style.zIndex = '9999';
       box.style.top = position[1] + 'px';
@@ -43,13 +42,22 @@
       box.style.minWidth = '85px';
       box.style.maxWidth = '200px';
       box.style.maxHeight = '100px';
+      box.style.boxSizing = 'border-box';
       box.style.overflow = 'auto';
       box.style.backgroundColor = '#fff';
       box.style.color = '#000000';
-      box.style.padding = '10px 15px';
+      box.style.overflow = 'hidden';
       box.style.borderRadius = '8px';
       box.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
       box.style.fontSize = '14px';
+
+      var innerContainer = document.createElement('div');
+      innerContainer.innerHTML = text;
+      innerContainer.id = 'wiki-what-body';
+      innerContainer.style.maxHeight = '100px';
+      innerContainer.style.boxSizing = 'border-box';
+      innerContainer.style.overflow = 'auto';
+      innerContainer.style.padding = '10px 15px';
 
       var closeButton = document.createElement('span');
       closeButton.innerHTML = '&#10005;';
@@ -59,6 +67,8 @@
       closeButton.style.cursor = 'pointer';
 
       box.appendChild(closeButton);
+      box.appendChild(innerContainer);
+
       document.body.appendChild(box);
     }
   };
@@ -122,6 +132,7 @@
       infoButton.style.height = '20px';
       infoButton.style.boxSizing = 'border-box';
       infoButton.style.backgroundColor = '#807e78';
+      infoButton.style.boxShadow = '0 0 10px rgba(255,255,255,0.5)';
       infoButton.style.color = '#fff';
       infoButton.style.padding = '0';
       infoButton.style.border = 'none';
@@ -143,7 +154,7 @@
 
   const mouseupListener = (event) => {
     event.stopPropagation();
-    if (event.target.id !== 'wiki-what-button' && event.target.id !== 'wiki-what-box') {
+    if (event.target.id !== 'wiki-what-button' && event.target.id !== 'wiki-what-body') {
       // Create info button
       clearSelection();
       hideInfoButton();
