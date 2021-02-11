@@ -1,5 +1,6 @@
 (function() {
-  const baseURL = 'https://ru.wikipedia.org/api/rest_v1/page/summary/';
+  // const baseURL = 'https://ru.wikipedia.org/api/rest_v1/page/summary/';
+  const baseURL = 'https://ru.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=true&format=json&titles=';
   const maxSelectionLength = 40;
 
   var listener;
@@ -7,9 +8,14 @@
   const getDefinition = (text) => {
     let requestUrl = baseURL + text;
 
-    return fetch(requestUrl).then(response => response.json()).then(result => {
-      return result;
-    });
+    // return fetch(requestUrl).then(response => response.json()).then(result => {
+    //   return result;
+    // });
+
+    chrome.runtime.sendMessage(
+      requestUrl,
+      data => dataProcessFunction(data)
+    );
   };
 
   const clearSelection = () => {
@@ -93,29 +99,37 @@
   const sendRequest = (event, str) => {
     event.stopPropagation();
 
-    getDefinition(str).then(
-      (res) => {
-        let text = '';
 
-        if (res.description && !res.type == 'disambiguation') {
-          text = res.description;
-        } else if (res.type == 'disambiguation' || res.extract) {
-          text = res.extract;
-        } else if (res.title == 'Not found.') {
-          text = 'Не найдено.';
-        } else {
-          text = res.title;
-        }
+    getDefinition(str);
 
-        hideInfoButton();
-        generateBox(text, displayPosition(event, 0, -15));
-      },
-      (err) => {
-        console.error(err);
-        hideInfoButton();
-        generateBox('Ошибка!', displayPosition(event, 0, -15));
-      }
-    );
+    // getDefinition(str).then(
+    //   (res) => {
+    //     let text = '';
+    //
+    //     if (res.description && !res.type == 'disambiguation') {
+    //       text = res.description;
+    //     } else if (res.type == 'disambiguation' || res.extract) {
+    //       text = res.extract;
+    //     } else if (res.title == 'Not found.') {
+    //       text = 'Не найдено.';
+    //     } else {
+    //       text = res.title;
+    //     }
+    //
+    //     hideInfoButton();
+    //     generateBox(text, displayPosition(event, 0, -15));
+    //   },
+    //   (err) => {
+    //     console.error(err);
+    //     hideInfoButton();
+    //     generateBox('Ошибка!', displayPosition(event, 0, -15));
+    //   }
+    // );
+  };
+
+  const dataProcessFunction = (res) => {
+    data = JSON.parse(res);
+    console.log(data);
   };
 
   const showInfoButton = (selectedText, position) => {
