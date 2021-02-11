@@ -12,7 +12,7 @@
   "browser_action": {
     "default_title": "Пояснятор"
   },
-  "permissions": ["webNavigation", "activeTab", "declarativeContent", "*://*/*"],
+  "permissions": ["activeTab", "declarativeContent"],
   "content_scripts": [{
       "matches": ["<all_urls>"],
       "js": ["inject.js"]
