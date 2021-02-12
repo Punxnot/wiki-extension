@@ -48,11 +48,10 @@
       box.style.minWidth = '85px';
       box.style.maxWidth = '200px';
       box.style.maxHeight = '100px';
+      box.style.overflow = 'hidden';
       box.style.boxSizing = 'border-box';
-      box.style.overflow = 'auto';
       box.style.backgroundColor = '#fff';
       box.style.color = '#000000';
-      box.style.overflow = 'hidden';
       box.style.borderRadius = '8px';
       box.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
       box.style.fontSize = '14px';
@@ -64,6 +63,7 @@
       innerContainer.style.boxSizing = 'border-box';
       innerContainer.style.overflow = 'auto';
       innerContainer.style.padding = '10px 15px';
+      innerContainer.style.textAlign = 'left';
 
       var closeButton = document.createElement('span');
       closeButton.innerHTML = '&#10005;';
@@ -139,11 +139,12 @@
       infoButton.id = 'wiki-what-button';
       infoButton.innerHTML = "?";
       infoButton.style.position = 'absolute';
-      infoButton.style.zIndex = '9999 !important';
+      infoButton.style.zIndex = '9999';
       infoButton.style.top = position[1] + 'px';
       infoButton.style.left = position[0] + 'px';
       infoButton.style.width = '20px';
       infoButton.style.height = '20px';
+      infoButton.style.lineHeight = '20px';
       infoButton.style.boxSizing = 'border-box';
       infoButton.style.backgroundColor = '#807e78';
       infoButton.style.boxShadow = '0 0 10px rgba(255,255,255,0.5)';
@@ -153,6 +154,7 @@
       infoButton.style.borderRadius = '50%';
       infoButton.style.fontSize = '14px';
       infoButton.style.cursor = 'pointer';
+      infoButton.style.outline = 'none';
       document.body.appendChild(infoButton);
 
       listener = (event) => {
