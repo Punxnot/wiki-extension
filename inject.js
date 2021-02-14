@@ -1,16 +1,16 @@
 (function() {
-  // const baseURL = 'https://ru.wikipedia.org/api/rest_v1/page/summary/';
-  const baseURL = 'https://ru.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=true&format=json&titles=';
+  const baseURLWiki = 'https://ru.wikipedia.org/api/rest_v1/page/summary/';
+  const yaKey = "dict.1.1.20210212T192358Z.6bd4e80f7085cc58.e4a4e2ff70e29e29ca401ed1dcf4c86032d9f295";
+  const baseURLYand = `https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=${yaKey}&lang=ru-ru&flags=4&text=`;
   const maxSelectionLength = 40;
 
   var listener;
 
-  const getDefinition = (text) => {
-    let requestUrl = baseURL + text;
+  var currentSearch = '';
+  var currentPosition = [];
 
-    // return fetch(requestUrl).then(response => response.json()).then(result => {
-    //   return result;
-    // });
+  const getDefinition = (text, url) => {
+    let requestUrl = url + text;
 
     chrome.runtime.sendMessage(
       requestUrl,
@@ -19,6 +19,8 @@
   };
 
   const clearSelection = () => {
+    currentSearch = '';
+    currentPosition = [];
     var currentBox = document.getElementById('wiki-what-box');
     if (currentBox) {
       currentBox.remove();
@@ -88,48 +90,46 @@
     return output;
   };
 
-  const displayPosition = (event, offsetLeft, offsetTop) => {
+  const displayPosition = (offsetLeft, offsetTop) => {
     var scrollTop = (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
-    const posX = event.clientX - offsetLeft;
-    const posY = event.clientY + offsetTop + scrollTop;
+    const posX = currentPosition[0] - offsetLeft;
+    const posY = currentPosition[1] + offsetTop + scrollTop;
 
     return [posX, posY];
   };
 
-  const sendRequest = (event, str) => {
-    event.stopPropagation();
-
-
-    getDefinition(str);
-
-    // getDefinition(str).then(
-    //   (res) => {
-    //     let text = '';
-    //
-    //     if (res.description && !res.type == 'disambiguation') {
-    //       text = res.description;
-    //     } else if (res.type == 'disambiguation' || res.extract) {
-    //       text = res.extract;
-    //     } else if (res.title == 'Not found.') {
-    //       text = 'Не найдено.';
-    //     } else {
-    //       text = res.title;
-    //     }
-    //
-    //     hideInfoButton();
-    //     generateBox(text, displayPosition(event, 0, -15));
-    //   },
-    //   (err) => {
-    //     console.error(err);
-    //     hideInfoButton();
-    //     generateBox('Ошибка!', displayPosition(event, 0, -15));
-    //   }
-    // );
+  const sendRequest = (str) => {
+    getDefinition(str, baseURLWiki);
   };
 
   const dataProcessFunction = (res) => {
     data = JSON.parse(res);
-    console.log(data);
+
+    var foundText = '';
+
+    if (data.description && !data.type == 'disambiguation') {
+      // Found Wiki description
+      foundText = data.description;
+    } else if (data.type == 'disambiguation' || data.extract) {
+      // Found Wiki extract
+      foundText = data.extract;
+    } else if (data.title == 'Not found.') {
+      // Not found in Wiki; search in Yandex
+      getDefinition(currentSearch, baseURLYand);
+      return;
+    } else if (data?.def[0]?.tr[0]?.text) {
+      // Found Yandex definition
+      foundText = data.def[0].tr[0].text;
+    } else {
+      // Not found
+      foundText = 'Не найдено.';
+    }
+
+    if (foundText && foundText.length) {
+      generateBox(foundText, displayPosition(10, 25));
+    }
+
+    hideInfoButton();
   };
 
   const showInfoButton = (selectedText, position) => {
@@ -160,7 +160,7 @@
       listener = (event) => {
         event.stopPropagation();
         if (event.target.id === 'wiki-what-button') {
-          sendRequest(event, selectedText);
+          sendRequest(selectedText);
         }
       };
 
@@ -183,7 +183,9 @@
       }
 
       if (currentSelection && currentSelection.length) {
-        showInfoButton(currentSelection, displayPosition(event, 10, 15));
+        currentSearch = currentSelection;
+        currentPosition = [event.clientX, event.clientY];
+        showInfoButton(currentSelection, displayPosition(10, 15));
       }
     }
   };
