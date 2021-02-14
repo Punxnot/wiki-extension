@@ -5,9 +5,9 @@
   const maxSelectionLength = 40;
 
   var listener;
-
   var currentSearch = '';
   var currentPosition = [];
+  var loading = false;
 
   const getDefinition = (text, url) => {
     let requestUrl = url + text;
@@ -99,12 +99,15 @@
   };
 
   const sendRequest = (str) => {
+    loading = true;
+    var btn = document.getElementById('wiki-what-button');
+    btn.innerHTML = '...';
+    btn.style.pointerEvents = 'none';
     getDefinition(str, baseURLWiki);
   };
 
   const dataProcessFunction = (res) => {
     data = JSON.parse(res);
-
     var foundText = '';
 
     if (data.description && !data.type == 'disambiguation') {
@@ -117,9 +120,17 @@
       // Not found in Wiki; search in Yandex
       getDefinition(currentSearch, baseURLYand);
       return;
-    } else if (data?.def[0]?.tr[0]?.text) {
+    } else if (data?.def[0]?.tr?.length) {
       // Found Yandex definition
-      foundText = data.def[0].tr[0].text;
+      let definitionsArray = data.def[0].tr;
+      let iterations = definitionsArray.length;
+      for (definition of definitionsArray) {
+        if (--iterations) {
+          foundText += definition.text + '; ';
+        } else {
+          foundText += definition.text;
+        }
+      }
     } else {
       // Not found
       foundText = 'Не найдено.';
@@ -129,6 +140,7 @@
       generateBox(foundText, displayPosition(10, 25));
     }
 
+    loading = false;
     hideInfoButton();
   };
 
@@ -137,7 +149,7 @@
     if (!existing) {
       var infoButton = document.createElement('button');
       infoButton.id = 'wiki-what-button';
-      infoButton.innerHTML = "?";
+      infoButton.innerHTML = '?';
       infoButton.style.position = 'absolute';
       infoButton.style.zIndex = '9999';
       infoButton.style.top = position[1] + 'px';
@@ -147,7 +159,7 @@
       infoButton.style.lineHeight = '20px';
       infoButton.style.boxSizing = 'border-box';
       infoButton.style.backgroundColor = '#807e78';
-      infoButton.style.boxShadow = '0 0 10px rgba(255,255,255,0.5)';
+      infoButton.style.boxShadow = '0 0 10px rgba(255,255,255,0.8)';
       infoButton.style.color = '#fff';
       infoButton.style.padding = '0';
       infoButton.style.border = 'none';
