@@ -57,6 +57,7 @@
       box.style.borderRadius = '8px';
       box.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
       box.style.fontSize = '14px';
+      box.style.lineHeight = '1.2em';
 
       var innerContainer = document.createElement('div');
       innerContainer.innerHTML = text;
