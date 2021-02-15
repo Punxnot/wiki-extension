@@ -1,18 +1,26 @@
 (function() {
-  const baseURL = 'https://ru.wikipedia.org/api/rest_v1/page/summary/';
+  const baseURLWiki = 'https://ru.wikipedia.org/api/rest_v1/page/summary/';
+  const yaKey = "dict.1.1.20210212T192358Z.6bd4e80f7085cc58.e4a4e2ff70e29e29ca401ed1dcf4c86032d9f295";
+  const baseURLYand = `https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=${yaKey}&lang=ru-ru&flags=4&text=`;
   const maxSelectionLength = 40;
 
   var listener;
+  var currentSearch = '';
+  var currentPosition = [];
+  var loading = false;
 
-  const getDefinition = (text) => {
-    let requestUrl = baseURL + text;
+  const getDefinition = (text, url) => {
+    let requestUrl = url + text;
 
-    return fetch(requestUrl).then(response => response.json()).then(result => {
-      return result;
-    });
+    chrome.runtime.sendMessage(
+      requestUrl,
+      data => dataProcessFunction(data)
+    );
   };
 
   const clearSelection = () => {
+    currentSearch = '';
+    currentPosition = [];
     var currentBox = document.getElementById('wiki-what-box');
     if (currentBox) {
       currentBox.remove();
@@ -49,6 +57,7 @@
       box.style.borderRadius = '8px';
       box.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
       box.style.fontSize = '14px';
+      box.style.lineHeight = '1.2em';
 
       var innerContainer = document.createElement('div');
       innerContainer.innerHTML = text;
@@ -82,40 +91,58 @@
     return output;
   };
 
-  const displayPosition = (event, offsetLeft, offsetTop) => {
+  const displayPosition = (offsetLeft, offsetTop) => {
     var scrollTop = (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
-    const posX = event.clientX - offsetLeft;
-    const posY = event.clientY + offsetTop + scrollTop;
+    const posX = currentPosition[0] - offsetLeft;
+    const posY = currentPosition[1] + offsetTop + scrollTop;
 
     return [posX, posY];
   };
 
-  const sendRequest = (event, str) => {
-    event.stopPropagation();
+  const sendRequest = (str) => {
+    loading = true;
+    var btn = document.getElementById('wiki-what-button');
+    btn.innerHTML = '...';
+    btn.style.pointerEvents = 'none';
+    getDefinition(str, baseURLWiki);
+  };
 
-    getDefinition(str).then(
-      (res) => {
-        let text = '';
+  const dataProcessFunction = (res) => {
+    data = JSON.parse(res);
+    var foundText = '';
 
-        if (res.description && !res.type == 'disambiguation') {
-          text = res.description;
-        } else if (res.type == 'disambiguation' || res.extract) {
-          text = res.extract;
-        } else if (res.title == 'Not found.') {
-          text = 'Не найдено.';
+    if (data.description && !data.type == 'disambiguation') {
+      // Found Wiki description
+      foundText = data.description;
+    } else if (data.type == 'disambiguation' || data.extract) {
+      // Found Wiki extract
+      foundText = data.extract;
+    } else if (data.title == 'Not found.') {
+      // Not found in Wiki; search in Yandex
+      getDefinition(currentSearch, baseURLYand);
+      return;
+    } else if (data?.def[0]?.tr?.length) {
+      // Found Yandex definition
+      let definitionsArray = data.def[0].tr;
+      let iterations = definitionsArray.length;
+      for (definition of definitionsArray) {
+        if (--iterations) {
+          foundText += definition.text + '; ';
         } else {
-          text = res.title;
+          foundText += definition.text;
         }
-
-        hideInfoButton();
-        generateBox(text, displayPosition(event, 0, -15));
-      },
-      (err) => {
-        console.error(err);
-        hideInfoButton();
-        generateBox('Ошибка!', displayPosition(event, 0, -15));
       }
-    );
+    } else {
+      // Not found
+      foundText = 'Не найдено.';
+    }
+
+    if (foundText && foundText.length) {
+      generateBox(foundText, displayPosition(10, 25));
+    }
+
+    loading = false;
+    hideInfoButton();
   };
 
   const showInfoButton = (selectedText, position) => {
@@ -123,7 +150,7 @@
     if (!existing) {
       var infoButton = document.createElement('button');
       infoButton.id = 'wiki-what-button';
-      infoButton.innerHTML = "?";
+      infoButton.innerHTML = '?';
       infoButton.style.position = 'absolute';
       infoButton.style.zIndex = '9999';
       infoButton.style.top = position[1] + 'px';
@@ -133,7 +160,7 @@
       infoButton.style.lineHeight = '20px';
       infoButton.style.boxSizing = 'border-box';
       infoButton.style.backgroundColor = '#807e78';
-      infoButton.style.boxShadow = '0 0 10px rgba(255,255,255,0.5)';
+      infoButton.style.boxShadow = '0 0 10px rgba(255,255,255,0.8)';
       infoButton.style.color = '#fff';
       infoButton.style.padding = '0';
       infoButton.style.border = 'none';
@@ -146,7 +173,7 @@
       listener = (event) => {
         event.stopPropagation();
         if (event.target.id === 'wiki-what-button') {
-          sendRequest(event, selectedText);
+          sendRequest(selectedText);
         }
       };
 
@@ -169,7 +196,9 @@
       }
 
       if (currentSelection && currentSelection.length) {
-        showInfoButton(currentSelection, displayPosition(event, 10, 15));
+        currentSearch = currentSelection;
+        currentPosition = [event.clientX, event.clientY];
+        showInfoButton(currentSelection, displayPosition(10, 15));
       }
     }
   };
