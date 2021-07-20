@@ -48,8 +48,8 @@
       box.style.top = position[1] + 'px';
       box.style.left = position[0] + 'px';
       box.style.minWidth = '85px';
-      box.style.maxWidth = '200px';
-      box.style.maxHeight = '100px';
+      box.style.maxWidth = '230px';
+      box.style.maxHeight = '240px';
       box.style.overflow = 'hidden';
       box.style.boxSizing = 'border-box';
       box.style.backgroundColor = '#fff';
@@ -62,7 +62,7 @@
       var innerContainer = document.createElement('div');
       innerContainer.innerHTML = text;
       innerContainer.id = 'wiki-what-body';
-      innerContainer.style.maxHeight = '100px';
+      innerContainer.style.maxHeight = '240px';
       innerContainer.style.boxSizing = 'border-box';
       innerContainer.style.overflow = 'auto';
       innerContainer.style.padding = '10px 15px';
