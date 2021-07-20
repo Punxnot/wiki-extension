@@ -182,7 +182,6 @@
   };
 
   const mouseupListener = (event) => {
-    event.stopPropagation();
     if (event.target.id !== 'wiki-what-button' && event.target.id !== 'wiki-what-body') {
       // Create info button
       clearSelection();
